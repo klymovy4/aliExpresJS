@@ -183,7 +183,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const storageQuery = (get) => {
         if (get) {
             if (localStorage.getItem("wishlist")) {
-                wishlist.splice(1,0 , ...JSON.parse(localStorage.getItem("wishlist"))); // или это или то
+                // wishlist.splice(1,0 , ...JSON.parse(localStorage.getItem("wishlist"))); // или это или то
+                wishlist.push(...JSON.parse(localStorage.getItem("wishlist")))
                 // JSON.parse(localStorage.getItem("wishlist")).map(el => wishlist.push(el));
             }
             checkCount();
