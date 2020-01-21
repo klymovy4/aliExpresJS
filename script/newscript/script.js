@@ -9,11 +9,12 @@ document.addEventListener("DOMContentLoaded", () => {
         cardCounter = cartBtn.querySelector(".counter"),
         wishlistCounter = wishlistBtn.querySelector(".counter"),
         cartWrapper = document.querySelector(".cart-wrapper");
-          
+
     const cookieQuery = get => {
         if (get) {
             if (getCookie("goodsBasket")) {
-                goodsBasket = JSON.parse(getCookie("goodsBasket"));
+                // goodsBasket = JSON.parse(getCookie("goodsBasket"));
+                Object.assign(goodsBasket, JSON.parse(getCookie("goodsBasket")))
 
             }
             checkCount();
@@ -108,6 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         storageQuery();
         checkCount();
+        console.log("renderBasket", items.id);
     };
 
     const closeCart = event => {
@@ -119,7 +121,26 @@ document.addEventListener("DOMContentLoaded", () => {
             document.removeEventListener("keyup", closeCart)
         }
     };
-    const showCartBasket = items => items.filter(el => goodsBasket.hasOwnProperty(el.id))
+    const calcTotalPrice = goods => {
+        //////////////////////
+        // let sum = 0;
+        // for (const item of goods) {
+        //     sum += item.price * goodsBasket[item.id];
+
+        // }
+        /////////////////////////////////////////////
+        // reduce FOR
+
+        let sum = goods.reduce((accum, item) => {
+            return accum + item.price * goodsBasket[item.id];
+        }, 0);
+        cart.querySelector(".cart-total>span").innerHTML = sum.toFixed(2);
+    };
+    const showCartBasket = items => {
+        const basketGoods = items.filter(el => goodsBasket.hasOwnProperty(el.id));
+        calcTotalPrice(basketGoods);
+        return basketGoods;
+    }
     const openCart = event => {
         event.preventDefault();
         cart.style.display = "flex";
@@ -214,6 +235,8 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         checkCount();
         cookieQuery();
+        console.log(goodsBasket);
+
     };
 
     const handlerGoods = event => {
@@ -241,7 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
     wishlistBtn.addEventListener("click", showWishlist);
     getGoods(renderCard, randomSort);
     storageQuery(true);
-    cookieQuery("gt");
+    cookieQuery("get");
 
 
 
