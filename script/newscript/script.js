@@ -9,11 +9,12 @@ document.addEventListener("DOMContentLoaded", () => {
         cardCounter = cartBtn.querySelector(".counter"),
         wishlistCounter = wishlistBtn.querySelector(".counter"),
         cartWrapper = document.querySelector(".cart-wrapper");
-          
+    // куки
     const cookieQuery = get => {
         if (get) {
             if (getCookie("goodsBasket")) {
-                goodsBasket = JSON.parse(getCookie("goodsBasket"));
+                // goodsBasket = JSON.parse(getCookie("goodsBasket"));
+                Object.assign(goodsBasket, JSON.parse(getCookie("goodsBasket")))
 
             }
             checkCount();
@@ -38,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (nameFunction === "renderBasket")
             cartWrapper.innerHTML = spinner;
     };
-
+    // Создаем Карточки товаров и корзину товаров
     const createCardGoods = (id, title, price, img) => {
         const card = document.createElement("div");
         card.className = "card-wrapper col-12 col-md-6 col-lg-4 col-xl-3 pb-3";
@@ -59,19 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         `;
         return card;
     };
-    const renderCard = items => {
-        goodsWrapper.textContent = "";
-        if (items.length) {
-            items.forEach(({ id, title, price, imgMin }, index, array) => {
-                goodsWrapper.append(createCardGoods(id, title, price, imgMin));
-            });
-        } else {
-            goodsWrapper.textContent = " 👎 sorry try again!";
-        }
-        storageQuery();
-        checkCount();
-    };
-    // создаем товар в карзине
     const createCartGoods = (id, title, price, img) => {
         const card = document.createElement("div");
         card.className = "goods";
@@ -97,6 +85,21 @@ document.addEventListener("DOMContentLoaded", () => {
                     `;
         return card;
     };
+    // Конец Создаем Карточки товаров и корзину товаров
+
+    // рендер карзины и рендер основной
+    const renderCard = items => {
+        goodsWrapper.textContent = "";
+        if (items.length) {
+            items.forEach(({ id, title, price, imgMin }, index, array) => {
+                goodsWrapper.append(createCardGoods(id, title, price, imgMin));
+            });
+        } else {
+            goodsWrapper.textContent = " 👎 sorry try again!";
+        }
+        storageQuery();
+        checkCount();
+    };
     const renderBasket = items => {
         cartWrapper.textContent = "";
         if (items.length) {
@@ -108,7 +111,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         storageQuery();
         checkCount();
+        console.log("renderBasket", items.id);
     };
+    //  КОНЕЦ рендер карзины и рендер основной
+    // Работа с хранилищем
+    const getCookie = (name) => {
+        let matches = document.cookie.match(new RegExp(
+            "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+        ));
+        return matches ? decodeURIComponent(matches[1]) : undefined;
+    };
+
 
     const closeCart = event => {
         const target = event.target;
@@ -119,7 +132,6 @@ document.addEventListener("DOMContentLoaded", () => {
             document.removeEventListener("keyup", closeCart)
         }
     };
-    const showCartBasket = items => items.filter(el => goodsBasket.hasOwnProperty(el.id))
     const openCart = event => {
         event.preventDefault();
         cart.style.display = "flex";
@@ -127,8 +139,35 @@ document.addEventListener("DOMContentLoaded", () => {
         getGoods(renderBasket, showCartBasket);
     };
 
-    const randomSort = items => items.sort(() => Math.random() - 0.5);
+    const calcTotalPrice = goods => {
+        //////////////////////
+        // let sum = 0;
+        // for (const item of goods) {
+        //     sum += item.price * goodsBasket[item.id];
 
+        // }
+        /////////////////////////////////////////////
+        // reduce FOR
+
+        let sum = goods.reduce((accum, item) => {
+            return accum + item.price * goodsBasket[item.id];
+        }, 0);
+        cart.querySelector(".cart-total>span").innerHTML = sum.toFixed(2);
+    };
+
+    // Фильтры
+    const showCartBasket = items => {
+        const basketGoods = items.filter(el => goodsBasket.hasOwnProperty(el.id));
+        calcTotalPrice(basketGoods);
+        return basketGoods;
+    };
+    const randomSort = items => items.sort(() => Math.random() - 0.5);
+    const showWishlist = () => {
+        getGoods(renderCard, items => items.filter(el => wishlist.includes(el.id)));
+    };
+    // КОНЕЦ Фильтры
+
+    // запрос на сервер
     const getGoods = (handler, filter) => {
         loading(handler.name);
         fetch("db/db.json")
@@ -149,7 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    const searcGoods = (event) => {
+    const searchGoods = (event) => {
         event.preventDefault();
         const input = document.querySelector("#searchGoods");
         const inputValue = input.value.trim();
@@ -165,14 +204,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 search.classList.remove("error");
             }, 2000)
         };
-    };
-
-    const getCookie = (name) => {
-
-        let matches = document.cookie.match(new RegExp(
-            "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
-        ));
-        return matches ? decodeURIComponent(matches[1]) : undefined;
     };
 
     const checkCount = () => {
@@ -194,6 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const toggleWishlist = (item) => {
+        // debugger;
         const id = item.dataset.goodsId;
         if (wishlist.includes(id)) {
             wishlist.splice(wishlist.indexOf(id), 1);
@@ -214,6 +246,8 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         checkCount();
         cookieQuery();
+        console.log(goodsBasket);
+
     };
 
     const handlerGoods = event => {
@@ -221,27 +255,45 @@ document.addEventListener("DOMContentLoaded", () => {
         if (target.classList.contains("card-add-wishlist")) {
             // console.log(target);
             toggleWishlist(target);
-        }
+        };
         if (target.classList.contains("card-add-cart")) {
             addBasket(target.dataset.goodsId);
             // console.log(target.dataset.goodsId);
+        };
+    };
+
+    const removeGoods = id => {
+        delete goodsBasket[id];
+        checkCount();
+        cookieQuery();
+        getGoods(renderBasket, showCartBasket)
+    };
+
+    const handlerBascket = event => {
+        const target = event.target;
+        if (target.classList.contains("goods-add-wishlist")) {
+            toggleWishlist(target);
         }
-
+        if (target.classList.contains("goods-delete")) {
+            removeGoods(target.dataset.goodsId);
+        }
     };
 
-    const showWishlist = () => {
-        getGoods(renderCard, items => items.filter(el => wishlist.includes(el.id)));
-    };
-
+  
+{
+    
     cartBtn.addEventListener("click", openCart);
     cart.addEventListener("click", closeCart);
     category.addEventListener("click", choiceCategory);
-    search.addEventListener("submit", searcGoods);
+    search.addEventListener("submit", searchGoods);
     goodsWrapper.addEventListener("click", handlerGoods);
+    cartWrapper.addEventListener("click", handlerBascket);
+
     wishlistBtn.addEventListener("click", showWishlist);
     getGoods(renderCard, randomSort);
     storageQuery(true);
-    cookieQuery("gt");
+    cookieQuery("get");
+}
 
 
 
@@ -348,4 +400,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-})
+});
