@@ -160,7 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
             ));
             input.value = "";
         } else {
-            search.classList.add("error");
+            search.classList.add("errror");
             setTimeout(() => {
                 search.classList.remove("error");
             }, 2000)
